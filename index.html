@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Audit-App light (v4)</title>
+  <title>Audit-App light (v6)</title>
   <style>
     :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
     body { margin: 0; background: #f6f7fb; color: #111; }
@@ -74,6 +74,7 @@
         </div>
 
         <div class="row" style="justify-content:flex-end;">
+          <span class="pill" id="versionPill">v6</span>
           <span class="pill" id="nowPill">—</span>
           <select id="lang">
             <option value="de">Deutsch</option>
@@ -98,7 +99,7 @@
           <div class="auditCard">
             <div class="itemTop">
               <div>
-                <div class="qTitle" id="dailyTitle">🦺 Täglicher Sicherheits- & Staplercheck – Wareneingang</div>
+                <div class="qTitle" id="dailyTitle">Täglicher Betriebscheck – Wareneingang</div>
                 <div class="muted" id="dailyHint">Dauer: 1–2 Minuten • Bei Abweichung: Maßnahme + Foto Pflicht.</div>
               </div>
               <span class="badge" id="dailyBadge">Täglich</span>
@@ -134,7 +135,7 @@
           <div class="auditCard">
             <div class="itemTop">
               <div>
-                <div class="qTitle" id="weeklyTitle">🔄 Wöchentlicher Prozessaudit – Wareneingang</div>
+                <div class="qTitle" id="weeklyTitle">Wöchentlicher Prozesscheck – Wareneingang</div>
                 <div class="muted" id="weeklyHint">Dauer: 3–6 Minuten • Bei Abweichung: Maßnahme + Foto Pflicht.</div>
               </div>
               <span class="badge" id="weeklyBadge">Wöchentlich</span>
@@ -227,7 +228,7 @@
               <option value="all" id="af_all">Alle</option>
               <option value="done" id="af_done">Erledigt</option>
             </select>
-            <input id="archiveSearch" placeholder="Suche (z. B. Stapler, PSA …)" />
+            <input id="archiveSearch" placeholder="Suche (z. B. Fehler, Probe …)" />
           </div>
         </div>
 
@@ -241,7 +242,8 @@
 (() => {
   const $ = (id) => document.getElementById(id);
 
-  const STORAGE_KEY = "audit-app-light.v4";
+  const APP_VERSION = "v6";
+  const STORAGE_KEY = "audit-app-light.v6";
   const MAX_REPEAT_SAMPLE = 60;
 
   const now = () => new Date();
@@ -274,7 +276,6 @@
   state.archivedActions = state.archivedActions || [];
   state.drafts = state.drafts || { daily:{}, weekly:{} };
 
-  // --- AUTO ARCHIVE (done + 30 days) ---
   function days(n) { return n * 24 * 60 * 60 * 1000; }
 
   function autoArchiveDoneActions() {
@@ -287,6 +288,7 @@
       const shouldArchive = (a.status === "done") && doneSince && ((nowMs - doneSince) >= THIRTY_DAYS);
 
       if (shouldArchive) {
+        if (!a.archivedAt) a.archivedAt = Date.now();
         if (!state.archivedActions.find(x => x.id === a.id)) state.archivedActions.unshift(a);
       } else {
         keep.push(a);
@@ -304,15 +306,18 @@
       tabActions: "Maßnahmen",
       tabOverview: "Übersicht",
       tabArchive: "Archiv",
-      dailyTitle: "🦺 Täglicher Sicherheits- & Staplercheck – Wareneingang",
+
+      dailyTitle: "Täglicher Betriebscheck – Wareneingang",
       dailyHint: "Dauer: 1–2 Minuten • Bei Abweichung: Maßnahme + Foto Pflicht.",
-      weeklyTitle: "🔄 Wöchentlicher Prozessaudit – Wareneingang",
+      weeklyTitle: "Wöchentlicher Prozesscheck – Wareneingang",
       weeklyHint: "Dauer: 3–6 Minuten • Bei Abweichung: Maßnahme + Foto Pflicht.",
+
       roleLabel: "Rolle",
       nameLabel: "Name",
       questions: "Fragen",
       autoSave: "Speichert automatisch im Browser.",
       submit: "Audit speichern",
+
       actionsTitle: "🛠️ Maßnahmenverfolgung",
       actionsHint: "Abweichungen erzeugen automatisch Maßnahmen. Foto ist Pflicht bei Abweichung.",
       archTitle: "🗄️ Archiv (read-only)",
@@ -322,11 +327,13 @@
       reset: "Reset",
       filters: { all:"Alle", open:"Offen", inprogress:"In Arbeit", done:"Erledigt", overdue:"Überfällig" },
       clearDone: "Erledigte löschen",
+
       ovTitle: "📊 Übersicht & Nachweis",
       ovHint: "Live-Überblick: Audits, offene/überfällige Maßnahmen, Wiederholer.",
       ovAuditsTitle: "Letzte Audits",
       ovRepeatTitle: "Wiederkehrende Abweichungen",
       ovRepeatHint: "Top 8 (letzte 60 Maßnahmen)",
+
       yes:"Ja",
       no:"Nein",
       none:"Keine",
@@ -365,7 +372,7 @@
       tipPdf:"Tipp: Im Druckdialog „Als PDF speichern“ wählen.",
       af_all:"Alle",
       af_done:"Erledigt",
-      archSearchPH:"Suche (z. B. Stapler, PSA …)",
+      archSearchPH:"Suche (z. B. Fehler, Probe …)",
       archivedOn:"Archiviert"
     },
     en: {
@@ -375,15 +382,18 @@
       tabActions: "Actions",
       tabOverview: "Overview",
       tabArchive: "Archive",
-      dailyTitle: "🦺 Daily Safety & Forklift Check – Goods In",
+
+      dailyTitle: "Daily Operations Check – Goods In",
       dailyHint: "1–2 minutes • For deviations: action + photo required.",
-      weeklyTitle: "🔄 Weekly Process Audit – Goods In",
+      weeklyTitle: "Weekly Process Check – Goods In",
       weeklyHint: "3–6 minutes • For deviations: action + photo required.",
+
       roleLabel: "Role",
       nameLabel: "Name",
       questions: "Questions",
       autoSave: "Auto-saves in your browser.",
       submit: "Save audit",
+
       actionsTitle: "🛠️ Action tracking",
       actionsHint: "Deviations automatically create actions. Photo is required for deviations.",
       archTitle: "🗄️ Archive (read-only)",
@@ -393,11 +403,13 @@
       reset: "Reset",
       filters: { all:"All", open:"Open", inprogress:"In progress", done:"Done", overdue:"Overdue" },
       clearDone: "Delete done",
+
       ovTitle: "📊 Overview & evidence",
       ovHint: "Live view: audits, open/overdue actions, repeat issues.",
       ovAuditsTitle: "Latest audits",
       ovRepeatTitle: "Repeat deviations",
       ovRepeatHint: "Top 8 (last 60 actions)",
+
       yes:"Yes",
       no:"No",
       none:"None",
@@ -436,7 +448,7 @@
       tipPdf:"Tip: In the print dialog choose “Save as PDF”.",
       af_all:"All",
       af_done:"Done",
-      archSearchPH:"Search (e.g. forklift, PPE …)",
+      archSearchPH:"Search (e.g. error, sample …)",
       archivedOn:"Archived"
     }
   };
@@ -446,21 +458,21 @@
       type: "daily",
       titleKey: "dailyTitle",
       questions: [
-        { id:"psa", de:"Wird PSA vollständig getragen?", en:"Is PPE worn completely?" },
-        { id:"forklog", de:"Staplerprüfbuch heute ausgefüllt?", en:"Forklift check log completed today?" },
-        { id:"lanes", de:"Verkehrswege frei & markiert?", en:"Traffic lanes clear & marked?" },
-        { id:"forkissues", de:"Auffälligkeiten an Staplern?", en:"Any issues with forklifts?" , special:"issueYesNo"}
+        { id:"deliveries_ok", de:"Waren alle Warenanlieferungen fehlerfrei?", en:"Were all deliveries error-free?" },
+        { id:"samples_prepped", de:"Wurden notwendige Muster entnommen und zur Versendung vorbereitet?", en:"Were required samples taken and prepared for shipment?" },
+        { id:"accidents", de:"Gab es Unfälle?", en:"Were there any accidents?", special:"issueYesNo" },
+        { id:"ffz_ready", de:"Sind alle FFZ einsatzfähig?", en:"Are all industrial trucks (FFZ) operational?" }
       ]
     },
     weekly: {
       type: "weekly",
       titleKey: "weeklyTitle",
       questions: [
-        { id:"hu", de:"HU bei allen Wareneingängen vorhanden?", en:"HU present for all receipts?" },
-        { id:"checklists", de:"Checklisten vollständig ausgefüllt?", en:"Checklists fully completed?" },
-        { id:"samples", de:"Musterentnahmen korrekt dokumentiert?", en:"Sampling documented correctly?" },
-        { id:"systemvsphys", de:"Systembuchung = physische Ware?", en:"System booking matches physical goods?" },
-        { id:"putaway", de:"Einlagerung gemäß Vorgabe?", en:"Put-away according to standard?" }
+        { id:"samples_to_qm", de:"Wurden alle Proben und Rückstellmuster an QM geschickt?", en:"Were all samples and retention samples sent to QM?" },
+        { id:"delivery_notes_filed", de:"Wurden alle Lieferscheine ordnungsgemäß abgeheftet?", en:"Were all delivery notes filed properly?" },
+        { id:"deviations_doc_comm", de:"Wurden alle Abweichungen dokumentiert und kommuniziert?", en:"Were all deviations documented and communicated?" },
+        { id:"stored_as_required", de:"Wurde alles nach Vorgabe eingelagert?", en:"Was everything stored according to the standard?" },
+        { id:"team_meeting", de:"Gab es mindestens ein Teammeeting?", en:"Was there at least one team meeting?" }
       ]
     }
   };
@@ -471,10 +483,15 @@
 
   function questionText(q, lang) { return lang === "en" ? q.en : q.de; }
 
+  function deviationTriggerAnswer(q) {
+    return q.special === "issueYesNo" ? "yes" : "no";
+  }
+
   function applyLanguage() {
     const lang = state.lang;
     const t = I18N[lang];
 
+    $("versionPill").textContent = APP_VERSION;
     $("appTitle").textContent = t.appTitle;
     $("appSub").textContent = t.appSub;
 
@@ -583,7 +600,8 @@
 
       const noteBox = document.createElement("div");
       noteBox.className = "reqBox";
-      const needsActionOn = q.special === "issueYesNo" ? "yes" : "no";
+
+      const needsActionOn = deviationTriggerAnswer(q);
 
       const hintRow = document.createElement("div");
       hintRow.className = "reqHint";
@@ -731,7 +749,7 @@
   }
 
   function createOrUpdateActionFromResult(audit, q, r) {
-    const needsActionOn = q.special === "issueYesNo" ? "yes" : "no";
+    const needsActionOn = deviationTriggerAnswer(q);
     const needsAction = r.answer === needsActionOn;
     if (!needsAction) return;
 
@@ -787,7 +805,7 @@
       const ans = getRadioValue(group);
       if (!ans) { alert(t.needAnswers); return; }
 
-      const needsActionOn = q.special === "issueYesNo" ? "yes" : "no";
+      const needsActionOn = deviationTriggerAnswer(q);
       const isDeviation = ans === needsActionOn;
 
       const measure = (draft[`${q.id}_measure`] || "").trim();
@@ -1024,7 +1042,7 @@
     const list = $("archiveList");
     list.innerHTML = "";
 
-    autoArchiveDoneActions(); // sicherstellen, dass Archiv aktuell ist
+    autoArchiveDoneActions();
 
     const f = $("archiveFilter").value;
     const q = ($("archiveSearch").value || "").trim().toLowerCase();
@@ -1130,9 +1148,11 @@
       latest.forEach((a) => {
         const item = document.createElement("div");
         item.className = "item";
+
+        const auditDef = AUDITS[a.type];
         const deviations = a.results.filter(r => {
-          const q = AUDITS[a.type].questions.find(x => x.id === r.qid);
-          const needsActionOn = q && q.special === "issueYesNo" ? "yes" : "no";
+          const qDef = auditDef.questions.find(x => x.id === r.qid);
+          const needsActionOn = qDef ? deviationTriggerAnswer(qDef) : "no";
           return r.answer === needsActionOn;
         }).length;
 
@@ -1142,7 +1162,7 @@
               <div><b>${a.title}</b></div>
               <div class="small">${roleLabel(a.role, lang)} • ${a.name} • ${fmtDateTime(a.createdAt, lang)}</div>
             </div>
-            <span class="badge ${deviations>0 ? "danger" : "ok"}">${deviations>0 ? (t.deviation + ": " + deviations) : "OK"}</span>
+            <span class="badge ${deviations>0 ? "danger" : "ok"}">${deviations>0 ? ("${t.deviation}: " + deviations) : "OK"}</span>
           </div>
         `;
         auditsList.appendChild(item);
@@ -1193,7 +1213,7 @@
   function exportJSON() {
     const data = {
       exportedAt: new Date().toISOString(),
-      version: "v4",
+      version: APP_VERSION,
       audits: state.audits,
       actions: state.actions,
       archivedActions: state.archivedActions
@@ -1222,7 +1242,6 @@
   }
 
   function clearDone() {
-    // löscht nur erledigte im AKTIVEN Bereich (Archiv bleibt als Nachweis bestehen)
     state.actions = state.actions.filter(a => a.status !== "done");
     save();
     renderAll();
@@ -1243,7 +1262,6 @@
     $("clearDoneBtn").disabled = state.actions.every(a => a.status !== "done");
   }
 
-  // --- PDF report (print to PDF) ---
   function escapeHtml(s) {
     return (s||"").replace(/[&<>"']/g, (c) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
   }
@@ -1253,10 +1271,10 @@
     const t = I18N[lang];
 
     const audits = state.audits.slice(0, 20);
-    const actions = [...state.actions, ...(state.archivedActions || [])]; // ALLE Maßnahmen
+    const actions = [...state.actions, ...(state.archivedActions || [])];
 
     const header = `
-      <h1>${escapeHtml(t.appTitle)} – ${escapeHtml(t.pdf)}</h1>
+      <h1>${escapeHtml(t.appTitle)} – ${escapeHtml(t.pdf)} (${APP_VERSION})</h1>
       <div class="meta">${escapeHtml(fmtDateTime(Date.now(), lang))}</div>
       <div class="hint">${escapeHtml(t.tipPdf)}</div>
       <hr/>
@@ -1270,10 +1288,14 @@
 
     const auditBlocks = audits.map(a => {
       const aActions = actionsByAudit.get(a.id) || [];
+      const auditDef = AUDITS[a.type];
 
       const rows = a.results.map(r => {
+        const qDef = auditDef.questions.find(x => x.id === r.qid);
+        const needsActionOn = qDef ? deviationTriggerAnswer(qDef) : "no";
+        const isDev = r.answer === needsActionOn;
         const answer = r.answer === "yes" ? t.yes : t.no;
-        const isDev = (a.type === "daily" && r.qid === "forkissues") ? (r.answer === "yes") : (r.answer === "no");
+
         return `
           <tr>
             <td>${escapeHtml(r.question)}</td>
@@ -1320,7 +1342,7 @@
       <head>
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1"/>
-        <title>${escapeHtml(t.appTitle)} – ${escapeHtml(t.pdf)}</title>
+        <title>${escapeHtml(t.appTitle)} – ${escapeHtml(t.pdf)} (${APP_VERSION})</title>
         <style>
           :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
           body { margin: 24px; color: #111; }
@@ -1344,7 +1366,7 @@
       </head>
       <body>
         ${header}
-        ${auditBlocks || `<div class="meta">${escapeHtml(I18N[lang].none)}</div>`}
+        ${auditBlocks || `<div class="meta">${escapeHtml(t.none)}</div>`}
       </body>
       </html>
     `;
@@ -1392,21 +1414,6 @@
 
     applyLanguage();
   }
-
-  // When archiving, stamp archivedAt (so users see when it moved)
-  const _autoArchiveOriginal = autoArchiveDoneActions;
-  autoArchiveDoneActions = function() {
-    const before = state.actions.map(a => a.id);
-    _autoArchiveOriginal();
-    // Stamp archivedAt for newly moved items (best-effort)
-    const afterActive = new Set(state.actions.map(a => a.id));
-    for (const a of state.archivedActions) {
-      if (!a.archivedAt) a.archivedAt = Date.now();
-      // If an item somehow returned to active, ignore
-      if (afterActive.has(a.id)) a.archivedAt = null;
-    }
-    save();
-  };
 
   init();
 })();
